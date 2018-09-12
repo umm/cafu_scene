@@ -39,7 +39,7 @@ namespace CAFU.Scene.Domain.UseCase
                 .SelectMany(x => SceneStrategyStructureMap[x].PreLoadSceneNameList)
                 .ToList()
                 .ForEach(IncrementReferenceCounter);
-            ((ILoaderUseCase)this).LoadRequestEntity.SetSceneStrategyStructureResolver(x => SceneStrategyStructureMap[x]);
+            ((ILoaderUseCase) this).LoadRequestEntity.SetSceneStrategyStructureResolver(x => SceneStrategyStructureMap[x]);
         }
 
         public void Load(ILoadRequestStructure loadRequestStructure)
@@ -47,6 +47,11 @@ namespace CAFU.Scene.Domain.UseCase
             if (!HasSceneStrategyStructure(loadRequestStructure.SceneStrategyStructure.SceneName))
             {
                 throw new ArgumentOutOfRangeException($"Does not find `{loadRequestStructure.SceneStrategyStructure.SceneName}' in SceneStrategyStructureMap.");
+            }
+
+            if (((ILoaderUseCase) this).LoadRequestEntity.HasLoaded(loadRequestStructure.SceneStrategyStructure.SceneName))
+            {
+                return;
             }
 
             if (HasPreLoadSceneStrategyStructure(loadRequestStructure.SceneStrategyStructure.SceneName))
