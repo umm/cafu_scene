@@ -49,7 +49,7 @@ namespace CAFU.Scene.Domain.UseCase
                 throw new ArgumentOutOfRangeException($"Does not find `{loadRequestStructure.SceneStrategyStructure.SceneName}' in SceneStrategyStructureMap.");
             }
 
-            if (((ILoaderUseCase) this).LoadRequestEntity.HasLoaded(loadRequestStructure.SceneStrategyStructure.SceneName))
+            if (!loadRequestStructure.SceneStrategyStructure.CanLoadMultiple && ((ILoaderUseCase) this).LoadRequestEntity.HasLoaded(loadRequestStructure.SceneStrategyStructure.SceneName))
             {
                 return;
             }
