@@ -10,14 +10,15 @@ namespace CAFU.Scene.Domain.Entity
 {
     public interface ILoadRequestEntity : IEntity
     {
-        void RequestLoad(string sceneName, bool loadAsSingle = false, bool canLoadMultiple = false);
-        void RequestLoad<TSceneName>(TSceneName sceneName, bool loadAsSingle = false, bool canLoadMultiple = false) where TSceneName : struct;
+        void RequestLoad(string sceneName);
+        void RequestLoad<TSceneName>(TSceneName sceneName) where TSceneName : struct;
         void RequestUnload(string sceneName);
         void RequestUnload<TSceneName>(TSceneName sceneName) where TSceneName : struct;
         bool HasLoaded(string sceneName);
         bool HasLoaded<TSceneName>(TSceneName sceneName) where TSceneName : struct;
         IObservable<ILoadRequestStructure> OnLoadRequestAsObservable();
         IObservable<IUnloadRequestStructure> OnUnloadRequestAsObservable();
+        void SetSceneStrategyStructureResolver(Func<string, ISceneStrategyStructure> resolver);
     }
 
     public class LoadRequestEntity : ILoadRequestEntity
@@ -25,25 +26,31 @@ namespace CAFU.Scene.Domain.Entity
         private ISubject<ILoadRequestStructure> LoadRequestSubject { get; } = new Subject<ILoadRequestStructure>();
         private ISubject<IUnloadRequestStructure> UnloadRequestSubject { get; } = new Subject<IUnloadRequestStructure>();
 
-        [Inject] private IFactory<string, bool, bool, ILoadRequestStructure> LoadRequestStructureFactory { get; }
-        [Inject] private IFactory<string, IUnloadRequestStructure> UnloadRequestStructureFactory { get; }
-        [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)] private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
+        [Inject] private IFactory<ISceneStrategyStructure, ILoadRequestStructure> LoadRequestStructureFactory { get; }
+        [Inject] private IFactory<ISceneStrategyStructure, IUnloadRequestStructure> UnloadRequestStructureFactory { get; }
 
-        public void RequestLoad(string sceneName, bool loadAsSingle = false, bool canLoadMultiple = false)
+        [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
+        private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
+
+        private Func<string, ISceneStrategyStructure> SceneStrategyStructureResolver { get; set; }
+
+        public void RequestLoad(string sceneName)
         {
-            LoadRequestSubject.OnNext(LoadRequestStructureFactory.Create(sceneName, loadAsSingle, canLoadMultiple));
+            var sceneStrategyStructure = SceneStrategyStructureResolver(sceneName);
+            LoadRequestSubject.OnNext(LoadRequestStructureFactory.Create(sceneStrategyStructure));
         }
 
-        public void RequestLoad<TSceneName>(TSceneName sceneName, bool loadAsSingle = false, bool canLoadMultiple = false)
+        public void RequestLoad<TSceneName>(TSceneName sceneName)
             // C# 7.0 以降であれば Enum constraint が使える
             where TSceneName : struct
         {
-            RequestLoad(sceneName.ToString(), loadAsSingle, canLoadMultiple);
+            RequestLoad(sceneName.ToString());
         }
 
         public void RequestUnload(string sceneName)
         {
-            UnloadRequestSubject.OnNext(UnloadRequestStructureFactory.Create(sceneName));
+            var sceneStrategyStructure = SceneStrategyStructureResolver(sceneName);
+            UnloadRequestSubject.OnNext(UnloadRequestStructureFactory.Create(sceneStrategyStructure));
         }
 
         public void RequestUnload<TSceneName>(TSceneName sceneName)
@@ -55,7 +62,15 @@ namespace CAFU.Scene.Domain.Entity
 
         public bool HasLoaded(string sceneName)
         {
-            return SceneManager.GetSceneByName(SceneNameCompleter(sceneName)).isLoaded;
+            var sceneStrategyStructure = SceneStrategyStructureResolver(sceneName);
+            return
+                SceneManager
+                    .GetSceneByName(
+                        sceneStrategyStructure.ShouldApplyCompleter
+                            ? SceneNameCompleter(sceneStrategyStructure.SceneName)
+                            : sceneStrategyStructure.SceneName
+                    )
+                    .isLoaded;
         }
 
         public bool HasLoaded<TSceneName>(TSceneName sceneName)
@@ -73,6 +88,11 @@ namespace CAFU.Scene.Domain.Entity
         public IObservable<IUnloadRequestStructure> OnUnloadRequestAsObservable()
         {
             return UnloadRequestSubject;
+        }
+
+        public void SetSceneStrategyStructureResolver(Func<string, ISceneStrategyStructure> resolver)
+        {
+            SceneStrategyStructureResolver = resolver;
         }
     }
 }

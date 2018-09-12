@@ -6,6 +6,6 @@ namespace CAFU.Scene.Domain.UseCase
 {
     public interface ISceneRepository : IRepository
     {
-        Task<ISceneStructure> GetAsync(string sceneName);
+        Task<ISceneStructure> GetAsync(ISceneStrategyStructure sceneStrategyStructure);
     }
 }

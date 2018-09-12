@@ -4,37 +4,31 @@ namespace CAFU.Scene.Domain.Structure
 {
     public interface ILoadRequestStructure : IStructure
     {
-        string SceneName { get; }
-        bool CanLoadMultiple { get; }
-        bool LoadAsSingle { get; }
+        ISceneStrategyStructure SceneStrategyStructure { get; }
     }
 
     public struct LoadRequestStructure : ILoadRequestStructure
     {
-        public LoadRequestStructure(string sceneName, bool canLoadMultiple, bool loadAsSingle)
+        public LoadRequestStructure(ISceneStrategyStructure sceneStrategyStructure)
         {
-            SceneName = sceneName;
-            CanLoadMultiple = canLoadMultiple;
-            LoadAsSingle = loadAsSingle;
+            SceneStrategyStructure = sceneStrategyStructure;
         }
 
-        public string SceneName { get; }
-        public bool CanLoadMultiple { get; }
-        public bool LoadAsSingle { get; }
+        public ISceneStrategyStructure SceneStrategyStructure { get; }
     }
 
     public interface IUnloadRequestStructure : IStructure
     {
-        string SceneName { get; }
+        ISceneStrategyStructure SceneStrategyStructure { get; }
     }
 
     public struct UnloadRequestStructure : IUnloadRequestStructure
     {
-        public UnloadRequestStructure(string sceneName)
+        public UnloadRequestStructure(ISceneStrategyStructure sceneStrategyStructure)
         {
-            SceneName = sceneName;
+            SceneStrategyStructure = sceneStrategyStructure;
         }
 
-        public string SceneName { get; }
+        public ISceneStrategyStructure SceneStrategyStructure { get; }
     }
 }

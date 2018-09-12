@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using CAFU.Scene.Domain.Entity;
 using CAFU.Scene.Domain.Structure;
 using UniRx;
@@ -8,7 +9,7 @@ namespace CAFU.Scene.Domain.UseCase
 {
     public class SimpleLoaderUseCase : ILoaderUseCase, IInitializable
     {
-        [Inject] IFactory<string, ISceneEntity> ILoaderUseCase.SceneEntityFactory { get; }
+        [Inject] IFactory<ISceneStrategyStructure, ISceneEntity> ILoaderUseCase.SceneEntityFactory { get; }
 
         [Inject] ILoadRequestEntity ILoaderUseCase.LoadRequestEntity { get; }
 
@@ -18,21 +19,39 @@ namespace CAFU.Scene.Domain.UseCase
 
         LinkedList<ISceneEntity> ILoaderUseCase.SceneEntityList { get; } = new LinkedList<ISceneEntity>();
 
-        [Inject] IEnumerable<string> ILoaderUseCase.InitialSceneNameList { get; }
+        [Inject] private IEnumerable<string> InitialSceneNameList { get; }
+
+        private IDictionary<string, ISceneStrategyStructure> SceneStrategyStructureMap { get; } = new Dictionary<string, ISceneStrategyStructure>();
 
         void IInitializable.Initialize()
         {
             this.InitializeUseCase();
+            ((ILoaderUseCase)this).LoadRequestEntity.SetSceneStrategyStructureResolver(GetOrCreateSceneStrategyStructure);
         }
 
         public void Load(ILoadRequestStructure loadRequestStructure)
         {
-            this.LoadAsObservable(loadRequestStructure.SceneName, loadRequestStructure.LoadAsSingle, loadRequestStructure.CanLoadMultiple).Subscribe();
+            this.LoadAsObservable(loadRequestStructure.SceneStrategyStructure).Subscribe();
         }
 
         public void Unload(IUnloadRequestStructure unloadRequestStructure)
         {
-            this.UnloadAsObservable(unloadRequestStructure.SceneName).Subscribe();
+            this.UnloadAsObservable(unloadRequestStructure.SceneStrategyStructure).Subscribe();
+        }
+
+        public IEnumerable<ISceneStrategyStructure> GenerateInitialSceneStrategyList()
+        {
+            return InitialSceneNameList.Select(GetOrCreateSceneStrategyStructure);
+        }
+
+        private ISceneStrategyStructure GetOrCreateSceneStrategyStructure(string sceneName)
+        {
+            if (!SceneStrategyStructureMap.ContainsKey(sceneName))
+            {
+                SceneStrategyStructureMap[sceneName] = new SceneStrategyStructure(sceneName);
+            }
+
+            return SceneStrategyStructureMap[sceneName];
         }
     }
 }

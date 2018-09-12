@@ -1,14 +1,16 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using CAFU.Core;
 using CAFU.Scene.Application;
+using CAFU.Scene.Domain.Structure;
 using UnityEngine.SceneManagement;
 using Zenject;
 
 namespace CAFU.Scene.Data.Repository
 {
-    public class SceneDataStoreResolver : IResolver<string, ISceneDataStore>
+    public class SceneDataStoreResolver : IResolver<ISceneStrategyStructure, ISceneDataStore>
     {
         [Inject(Id = Constant.InjectId.DataStore.SceneInBuild)]
         private ISceneDataStore InBuildDataStore { get; }
@@ -16,13 +18,28 @@ namespace CAFU.Scene.Data.Repository
         [Inject(Id = Constant.InjectId.DataStore.SceneInAssetBundle)]
         private ISceneDataStore InAssetBundleDataStore { get; }
 
-        public ISceneDataStore Resolve(string param1)
+        [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
+        private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
+
+        public ISceneDataStore Resolve(ISceneStrategyStructure param1)
         {
-            return InBuildScenePathList.Any(scenePath => Regex.IsMatch(scenePath, $"{param1}\\.unity$")) ? InBuildDataStore : InAssetBundleDataStore;
+            return
+                InBuildScenePathList
+                    .Any(
+                        scenePath =>
+                            // パスは Assets/Scenes/Foo/Bar.unity という形式なのでシーン名とのマッチは拡張子を除く
+                            Path.GetFileNameWithoutExtension(scenePath) == (
+                                param1.ShouldApplyCompleter
+                                    ? SceneNameCompleter(param1.SceneName)
+                                    : param1.SceneName
+                            )
+                    )
+                    ? InBuildDataStore
+                    : InAssetBundleDataStore;
         }
 
         // Scene のパス一覧を事前に構築しておく
-        //   LoadScene 後でないと Scene 構造体が構築されず、 Scene.name を参照出来ないため
+        //   LoadScene 後でないと Scene 構造体が構築されず Scene.name を参照出来ないため、パスの一覧から判定するしかない
         private static IEnumerable<string> InBuildScenePathList { get; } =
             Enumerable
                 .Range(0, SceneManager.sceneCountInBuildSettings)
