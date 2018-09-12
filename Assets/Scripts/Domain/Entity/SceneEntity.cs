@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CAFU.Core;
 using CAFU.Scene.Application;
 using CAFU.Scene.Application.Enumerate;
+using CAFU.Scene.Domain.Structure;
 using UniRx;
 using UnityEngine.SceneManagement;
 using Zenject;
@@ -11,9 +12,9 @@ namespace CAFU.Scene.Domain.Entity
 {
     public interface ISceneEntity : IEntity
     {
-        string SceneName { get; }
+        ISceneStrategyStructure SceneStrategyStructure { get; }
 
-        Task Load(bool loadAsSingle = false);
+        Task Load();
         Task Unload();
 
         IObservable<Unit> WillLoadAsObservable();
@@ -30,17 +31,24 @@ namespace CAFU.Scene.Domain.Entity
         [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
         private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
 
-        public SceneEntity(string sceneName)
+        public SceneEntity(ISceneStrategyStructure sceneStrategyStructure)
         {
-            SceneName = sceneName;
+            SceneStrategyStructure = sceneStrategyStructure;
         }
 
-        public string SceneName { get; }
+        public ISceneStrategyStructure SceneStrategyStructure { get; }
 
-        public async Task Load(bool loadAsSingle = false)
+        public async Task Load()
         {
             LoadSubject.OnNext(Tense.Will);
-            await SceneManager.LoadSceneAsync(SceneNameCompleter(SceneName), loadAsSingle ? LoadSceneMode.Single : LoadSceneMode.Additive);
+            await SceneManager.LoadSceneAsync(
+                SceneStrategyStructure.ShouldApplyCompleter
+                    ? SceneNameCompleter(SceneStrategyStructure.SceneName)
+                    : SceneStrategyStructure.SceneName,
+                SceneStrategyStructure.LoadAsSingle
+                    ? LoadSceneMode.Single
+                    : LoadSceneMode.Additive
+            );
             LoadSubject.OnNext(Tense.Did);
             LoadSubject.OnCompleted();
         }
@@ -48,7 +56,9 @@ namespace CAFU.Scene.Domain.Entity
         public async Task Unload()
         {
             UnloadSubject.OnNext(Tense.Will);
-            await SceneManager.UnloadSceneAsync(SceneNameCompleter(SceneName));
+            await SceneManager.UnloadSceneAsync(
+                SceneStrategyStructure.ShouldApplyCompleter ? SceneNameCompleter(SceneStrategyStructure.SceneName) : SceneStrategyStructure.SceneName
+            );
             UnloadSubject.OnNext(Tense.Did);
             UnloadSubject.OnCompleted();
         }

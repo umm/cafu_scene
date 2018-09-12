@@ -14,7 +14,7 @@ namespace CAFU.Scene.Data.DataStore
         [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
         private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
 
-        public Task<ISceneStructure> GetAsync(string sceneName)
+        public Task<ISceneStructure> GetAsync(ISceneStrategyStructure sceneStrategyStructure)
         {
             throw new NotImplementedException();
         }

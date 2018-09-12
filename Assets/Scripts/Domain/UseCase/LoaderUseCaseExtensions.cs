@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using CAFU.Scene.Domain.Structure;
 using UniRx;
 using UnityEngine.SceneManagement;
 
@@ -13,39 +14,39 @@ namespace CAFU.Scene.Domain.UseCase
             loaderUseCase.LoadRequestEntity.OnUnloadRequestAsObservable().Subscribe(loaderUseCase.Unload);
             SceneManager.sceneLoaded += (scene, loadSceneMode) => loaderUseCase.SceneStateEntity.DidLoadSubject.OnNext(scene.name);
             SceneManager.sceneUnloaded += (scene) => loaderUseCase.SceneStateEntity.DidUnloadSubject.OnNext(scene.name);
-            loaderUseCase.InitialSceneNameList.Select(loaderUseCase.SceneEntityFactory.Create).ToList().ForEach(x => loaderUseCase.SceneEntityList.AddLast(x));
+            loaderUseCase.GenerateInitialSceneStrategyList().Select(loaderUseCase.SceneEntityFactory.Create).ToList().ForEach(x => loaderUseCase.SceneEntityList.AddLast(x));
         }
 
-        public static IObservable<Unit> LoadAsObservable(this ILoaderUseCase loaderUseCase, string sceneName, bool loadAsSingle, bool canLoadMultiple)
+        public static IObservable<Unit> LoadAsObservable(this ILoaderUseCase loaderUseCase, ISceneStrategyStructure sceneStrategyStructure)
         {
             // Do nothing if duplicate loading
-            if (!canLoadMultiple && loaderUseCase.LoadRequestEntity.HasLoaded(sceneName))
+            if (!sceneStrategyStructure.CanLoadMultiple && loaderUseCase.LoadRequestEntity.HasLoaded(sceneStrategyStructure.SceneName))
             {
                 return Observable.ReturnUnit();
             }
-            var sceneEntity = loaderUseCase.SceneEntityFactory.Create(sceneName);
+            var sceneEntity = loaderUseCase.SceneEntityFactory.Create(sceneStrategyStructure);
             loaderUseCase.SceneEntityList.AddLast(sceneEntity);
-            loaderUseCase.SceneStateEntity.WillLoadSubject.OnNext(sceneEntity.SceneName);
+            loaderUseCase.SceneStateEntity.WillLoadSubject.OnNext(sceneEntity.SceneStrategyStructure.SceneName);
             return loaderUseCase.SceneRepository
-                .GetAsync(sceneName)
+                .GetAsync(sceneStrategyStructure)
                 .ToObservable()
                 .SelectMany(
                     _ => sceneEntity
-                        .Load(loadAsSingle)
+                        .Load()
                         .ToObservable()
                 );
         }
 
-        public static IObservable<Unit> UnloadAsObservable(this ILoaderUseCase loaderUseCase, string sceneName)
+        public static IObservable<Unit> UnloadAsObservable(this ILoaderUseCase loaderUseCase, ISceneStrategyStructure sceneStrategyStructure)
         {
-            if (loaderUseCase.SceneEntityList.All(x => x.SceneName != sceneName))
+            if (loaderUseCase.SceneEntityList.All(x => x.SceneStrategyStructure.SceneName != sceneStrategyStructure.SceneName))
             {
-                return Observable.Throw<Unit>(new ArgumentOutOfRangeException($"Scene name `{sceneName}' does not contain in loaded scenes."));
+                return Observable.Throw<Unit>(new ArgumentOutOfRangeException($"Scene name `{sceneStrategyStructure.SceneName}' does not contain in loaded scenes."));
             }
 
-            loaderUseCase.SceneStateEntity.WillUnloadSubject.OnNext(sceneName);
+            loaderUseCase.SceneStateEntity.WillUnloadSubject.OnNext(sceneStrategyStructure.SceneName);
             // Search from last
-            var sceneEntity = loaderUseCase.SceneEntityList.Last(x => x.SceneName == sceneName);
+            var sceneEntity = loaderUseCase.SceneEntityList.Last(x => x.SceneStrategyStructure.SceneName == sceneStrategyStructure.SceneName);
             return sceneEntity
                 .Unload()
                 .ToObservable()

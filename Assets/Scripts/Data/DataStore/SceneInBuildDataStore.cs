@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using CAFU.Scene.Application;
 using CAFU.Scene.Data.Repository;
 using CAFU.Scene.Domain.Structure;
-using CAFU.Scene.Domain.UseCase;
 using Zenject;
 
 namespace CAFU.Scene.Data.DataStore
@@ -15,9 +14,16 @@ namespace CAFU.Scene.Data.DataStore
         [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
         private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
 
-        public async Task<ISceneStructure> GetAsync(string sceneName)
+        public async Task<ISceneStructure> GetAsync(ISceneStrategyStructure sceneStrategyStructure)
         {
-            return await Task.FromResult(SceneStructureFactory.Create(SceneNameCompleter(sceneName)));
+            return await
+                Task.FromResult(
+                    SceneStructureFactory.Create(
+                        sceneStrategyStructure.ShouldApplyCompleter
+                            ? SceneNameCompleter(sceneStrategyStructure.SceneName)
+                            : sceneStrategyStructure.SceneName
+                    )
+                );
         }
     }
 }
