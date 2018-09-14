@@ -8,7 +8,7 @@ namespace CAFU.Scene.Domain.UseCase
 {
     public interface ILoaderUseCase : IUseCase
     {
-        IFactory<ISceneStrategyStructure, ISceneEntity> SceneEntityFactory { get; }
+        IFactory<ISceneStrategy, ISceneEntity> SceneEntityFactory { get; }
 
         ILoadRequestEntity LoadRequestEntity { get; }
 
@@ -18,10 +18,10 @@ namespace CAFU.Scene.Domain.UseCase
 
         LinkedList<ISceneEntity> SceneEntityList { get; }
 
-        void Load(ILoadRequestStructure loadRequestStructure);
+        void Load(ILoadRequest loadRequest);
 
-        void Unload(IUnloadRequestStructure unloadRequestStructure);
+        void Unload(IUnloadRequest unloadRequest);
 
-        IEnumerable<ISceneStrategyStructure> GenerateInitialSceneStrategyList();
+        IEnumerable<ISceneStrategy> GenerateInitialSceneStrategyList();
     }
 }

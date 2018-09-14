@@ -17,14 +17,14 @@ namespace CAFU.Scene.Application.Installer
         public override void InstallBindings()
         {
             // Structures
-            Container.BindIFactory<ISceneStrategyStructure, ILoadRequestStructure>().To<LoadRequestStructure>();
-            Container.BindIFactory<ISceneStrategyStructure, IUnloadRequestStructure>().To<UnloadRequestStructure>();
-            Container.BindIFactory<string, ISceneStructure>().To<SceneStructure>();
+            Container.BindIFactory<ISceneStrategy, ILoadRequest>().To<LoadRequest>();
+            Container.BindIFactory<ISceneStrategy, IUnloadRequest>().To<UnloadRequest>();
+            Container.BindIFactory<string, IScene>().To<Domain.Structure.Scene>();
 
             // Entities
             Container.BindInterfacesTo<LoadRequestEntity>().AsSingle();
             Container.BindInterfacesTo<SceneStateEntity>().AsSingle();
-            Container.BindIFactory<ISceneStrategyStructure, ISceneEntity>().To<SceneEntity>();
+            Container.BindIFactory<ISceneStrategy, ISceneEntity>().To<SceneEntity>();
 
             // UseCases
             Container.BindInterfacesTo<TUseCase>().AsSingle();

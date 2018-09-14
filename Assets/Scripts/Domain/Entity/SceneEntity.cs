@@ -12,7 +12,7 @@ namespace CAFU.Scene.Domain.Entity
 {
     public interface ISceneEntity : IEntity
     {
-        ISceneStrategyStructure SceneStrategyStructure { get; }
+        ISceneStrategy SceneStrategy { get; }
 
         Task Load();
         Task Unload();
@@ -31,21 +31,21 @@ namespace CAFU.Scene.Domain.Entity
         [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
         private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
 
-        public SceneEntity(ISceneStrategyStructure sceneStrategyStructure)
+        public SceneEntity(ISceneStrategy sceneStrategy)
         {
-            SceneStrategyStructure = sceneStrategyStructure;
+            SceneStrategy = sceneStrategy;
         }
 
-        public ISceneStrategyStructure SceneStrategyStructure { get; }
+        public ISceneStrategy SceneStrategy { get; }
 
         public async Task Load()
         {
             LoadSubject.OnNext(Tense.Will);
             await SceneManager.LoadSceneAsync(
-                SceneStrategyStructure.ShouldApplyCompleter
-                    ? SceneNameCompleter(SceneStrategyStructure.SceneName)
-                    : SceneStrategyStructure.SceneName,
-                SceneStrategyStructure.LoadAsSingle
+                SceneStrategy.ShouldApplyCompleter
+                    ? SceneNameCompleter(SceneStrategy.SceneName)
+                    : SceneStrategy.SceneName,
+                SceneStrategy.LoadAsSingle
                     ? LoadSceneMode.Single
                     : LoadSceneMode.Additive
             );
@@ -57,7 +57,7 @@ namespace CAFU.Scene.Domain.Entity
         {
             UnloadSubject.OnNext(Tense.Will);
             await SceneManager.UnloadSceneAsync(
-                SceneStrategyStructure.ShouldApplyCompleter ? SceneNameCompleter(SceneStrategyStructure.SceneName) : SceneStrategyStructure.SceneName
+                SceneStrategy.ShouldApplyCompleter ? SceneNameCompleter(SceneStrategy.SceneName) : SceneStrategy.SceneName
             );
             UnloadSubject.OnNext(Tense.Did);
             UnloadSubject.OnCompleted();

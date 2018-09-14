@@ -9,7 +9,7 @@ namespace CAFU.Scene.Domain.UseCase
 {
     public class SimpleLoaderUseCase : ILoaderUseCase, IInitializable
     {
-        [Inject] IFactory<ISceneStrategyStructure, ISceneEntity> ILoaderUseCase.SceneEntityFactory { get; }
+        [Inject] IFactory<ISceneStrategy, ISceneEntity> ILoaderUseCase.SceneEntityFactory { get; }
 
         [Inject] ILoadRequestEntity ILoaderUseCase.LoadRequestEntity { get; }
 
@@ -21,7 +21,7 @@ namespace CAFU.Scene.Domain.UseCase
 
         [Inject] private IEnumerable<string> InitialSceneNameList { get; }
 
-        private IDictionary<string, ISceneStrategyStructure> SceneStrategyStructureMap { get; } = new Dictionary<string, ISceneStrategyStructure>();
+        private IDictionary<string, ISceneStrategy> SceneStrategyStructureMap { get; } = new Dictionary<string, ISceneStrategy>();
 
         void IInitializable.Initialize()
         {
@@ -29,26 +29,26 @@ namespace CAFU.Scene.Domain.UseCase
             ((ILoaderUseCase)this).LoadRequestEntity.SetSceneStrategyStructureResolver(GetOrCreateSceneStrategyStructure);
         }
 
-        public void Load(ILoadRequestStructure loadRequestStructure)
+        public void Load(ILoadRequest loadRequest)
         {
-            this.LoadAsObservable(loadRequestStructure.SceneStrategyStructure).Subscribe();
+            this.LoadAsObservable(loadRequest.SceneStrategy).Subscribe();
         }
 
-        public void Unload(IUnloadRequestStructure unloadRequestStructure)
+        public void Unload(IUnloadRequest unloadRequest)
         {
-            this.UnloadAsObservable(unloadRequestStructure.SceneStrategyStructure).Subscribe();
+            this.UnloadAsObservable(unloadRequest.SceneStrategy).Subscribe();
         }
 
-        public IEnumerable<ISceneStrategyStructure> GenerateInitialSceneStrategyList()
+        public IEnumerable<ISceneStrategy> GenerateInitialSceneStrategyList()
         {
             return InitialSceneNameList.Select(GetOrCreateSceneStrategyStructure);
         }
 
-        private ISceneStrategyStructure GetOrCreateSceneStrategyStructure(string sceneName)
+        private ISceneStrategy GetOrCreateSceneStrategyStructure(string sceneName)
         {
             if (!SceneStrategyStructureMap.ContainsKey(sceneName))
             {
-                SceneStrategyStructureMap[sceneName] = new SceneStrategyStructure(sceneName);
+                SceneStrategyStructureMap[sceneName] = new SceneStrategy(sceneName);
             }
 
             return SceneStrategyStructureMap[sceneName];

@@ -2,14 +2,14 @@ using CAFU.Core;
 
 namespace CAFU.Scene.Domain.Structure
 {
-    public interface ISceneStructure : IStructure
+    public interface IScene : IStructure
     {
         string Name { get; }
     }
 
-    public struct SceneStructure : ISceneStructure
+    public struct Scene : IScene
     {
-        public SceneStructure(string name)
+        public Scene(string name)
         {
             Name = name;
         }

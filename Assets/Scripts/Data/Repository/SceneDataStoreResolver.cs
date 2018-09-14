@@ -10,7 +10,7 @@ using Zenject;
 
 namespace CAFU.Scene.Data.Repository
 {
-    public class SceneDataStoreResolver : IResolver<ISceneStrategyStructure, ISceneDataStore>
+    public class SceneDataStoreResolver : IResolver<ISceneStrategy, ISceneDataStore>
     {
         [Inject(Id = Constant.InjectId.DataStore.SceneInBuild)]
         private ISceneDataStore InBuildDataStore { get; }
@@ -21,7 +21,7 @@ namespace CAFU.Scene.Data.Repository
         [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
         private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
 
-        public ISceneDataStore Resolve(ISceneStrategyStructure param1)
+        public ISceneDataStore Resolve(ISceneStrategy param1)
         {
             return
                 InBuildScenePathList

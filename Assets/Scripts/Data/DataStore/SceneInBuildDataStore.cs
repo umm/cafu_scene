@@ -9,19 +9,19 @@ namespace CAFU.Scene.Data.DataStore
 {
     public class SceneInBuildDataStore : ISceneDataStore
     {
-        [Inject] private IFactory<string, ISceneStructure> SceneStructureFactory { get; }
+        [Inject] private IFactory<string, IScene> SceneStructureFactory { get; }
 
         [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
         private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
 
-        public async Task<ISceneStructure> GetAsync(ISceneStrategyStructure sceneStrategyStructure)
+        public async Task<IScene> GetAsync(ISceneStrategy sceneStrategy)
         {
             return await
                 Task.FromResult(
                     SceneStructureFactory.Create(
-                        sceneStrategyStructure.ShouldApplyCompleter
-                            ? SceneNameCompleter(sceneStrategyStructure.SceneName)
-                            : sceneStrategyStructure.SceneName
+                        sceneStrategy.ShouldApplyCompleter
+                            ? SceneNameCompleter(sceneStrategy.SceneName)
+                            : sceneStrategy.SceneName
                     )
                 );
         }
