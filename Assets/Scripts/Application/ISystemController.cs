@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using CAFU.Core;
 
-namespace CAFU.Scene.Presentation.Presenter
+namespace CAFU.Scene.Application
 {
-    public interface ISystemController : IView
+    public interface ISystemController
     {
         IEnumerable<string> InitialSceneNameList { get; }
     }
