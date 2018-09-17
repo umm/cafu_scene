@@ -3,6 +3,7 @@
     "references": [
         "umm@cafu_core@v3",
         "umm@cafu_zenject",
+        "umm@element_title_attribute",
         "umm@unirx",
         "Zenject"
     ],
