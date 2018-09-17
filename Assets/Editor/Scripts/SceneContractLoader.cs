@@ -23,7 +23,6 @@ namespace CAFU.Zenject.Editor
         {
             EditorApplication.playModeStateChanged += (state) =>
             {
-                Debug.Log($"{state}");
                 if (state == PlayModeStateChange.EnteredEditMode && EditorPrefs.HasKey(EditorPrefsKeySystemControllerProperty))
                 {
                     RestoreScenes();
