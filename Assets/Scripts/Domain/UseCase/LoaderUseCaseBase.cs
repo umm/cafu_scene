@@ -30,6 +30,8 @@ namespace CAFU.Scene.Domain.UseCase
 
         private LinkedList<ISceneEntity> SceneEntityList { get; } = new LinkedList<ISceneEntity>();
 
+        private IDictionary<string, IDisposable> LoadDisposableMap { get; } = new Dictionary<string, IDisposable>();
+
         void IInitializable.Initialize()
         {
             PreInitialize();
@@ -46,12 +48,13 @@ namespace CAFU.Scene.Domain.UseCase
         protected IObservable<Unit> LoadAsObservable(ISceneStrategy sceneStrategy)
         {
             // Do nothing if duplicate loading
-            if (!sceneStrategy.CanLoadMultiple && RequestEntity.HasLoaded(sceneStrategy))
+            if (!CanLoadScene(sceneStrategy))
             {
                 return Observable.ReturnUnit();
             }
 
             var sceneEntity = SceneEntityFactory.Create(sceneStrategy);
+            LoadDisposableMap[sceneStrategy.SceneName] = sceneEntity.DidLoadAsObservable().Take(1).Subscribe();
             SceneEntityList.AddLast(sceneEntity);
             SceneStateEntity.WillLoadSubject.OnNext(sceneEntity.SceneStrategy.SceneName);
             return SceneRepository
@@ -80,7 +83,17 @@ namespace CAFU.Scene.Domain.UseCase
                 .ForEachAsync(_ => SceneEntityList.Remove(sceneEntity));
         }
 
-        protected bool HasLoaded(ISceneStrategy sceneStrategy)
+        protected bool CanLoadScene(ISceneStrategy sceneStrategy)
+        {
+            if (sceneStrategy.CanLoadMultiple)
+            {
+                return true;
+            }
+
+            return !HasLoaded(sceneStrategy) && (!LoadDisposableMap.ContainsKey(sceneStrategy.SceneName) || LoadDisposableMap[sceneStrategy.SceneName] == null);
+        }
+
+        private bool HasLoaded(ISceneStrategy sceneStrategy)
         {
             return RequestEntity.HasLoaded(sceneStrategy);
         }

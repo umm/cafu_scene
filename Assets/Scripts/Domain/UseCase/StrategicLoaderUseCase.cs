@@ -13,17 +13,17 @@ namespace CAFU.Scene.Domain.UseCase
 
         public override void Load(ISceneStrategy sceneStrategy)
         {
-            if (!HasSceneStrategyStructure(sceneStrategy.SceneName))
+            if (!HasSceneStrategy(sceneStrategy.SceneName))
             {
                 throw new ArgumentOutOfRangeException($"Does not find `{sceneStrategy.SceneName}' in SceneStrategyMap.");
             }
 
-            if (!sceneStrategy.CanLoadMultiple && HasLoaded(sceneStrategy))
+            if (!CanLoadScene(sceneStrategy))
             {
                 return;
             }
 
-            if (HasPreLoadSceneStrategyStructure(sceneStrategy.SceneName))
+            if (HasPreLoadSceneStrategy(sceneStrategy.SceneName))
             {
                 // First, load pre load scenes
                 SceneStrategyMap[sceneStrategy.SceneName]
@@ -50,12 +50,12 @@ namespace CAFU.Scene.Domain.UseCase
 
         public override void Unload(ISceneStrategy sceneStrategy)
         {
-            if (!HasSceneStrategyStructure(sceneStrategy.SceneName))
+            if (!HasSceneStrategy(sceneStrategy.SceneName))
             {
                 throw new ArgumentOutOfRangeException($"Does not find `{sceneStrategy.SceneName}' in SceneStrategyMap.");
             }
 
-            if (HasPostUnloadSceneStrategyStructure(sceneStrategy.SceneName))
+            if (HasPostUnloadSceneStrategy(sceneStrategy.SceneName))
             {
                 // First, unload target scene
                 UnloadAsObservable(sceneStrategy)
@@ -70,7 +70,7 @@ namespace CAFU.Scene.Domain.UseCase
                     .SelectMany(
                         _ => SceneStrategyMap[sceneStrategy.SceneName]
                             .PostUnloadSceneNameList
-                            .Where(CanUnloadScene)
+                            .Where(x => !ReferenceCounterMap.ContainsKey(x) || ReferenceCounterMap[x] <= 0)
                             .Select(x => SceneStrategyMap[x])
                             .Select(UnloadAsObservable)
                             .WhenAll()
@@ -90,31 +90,26 @@ namespace CAFU.Scene.Domain.UseCase
 
         protected override ISceneStrategy GetOrCreateSceneStrategy(string sceneName)
         {
-            if (!HasSceneStrategyStructure(sceneName))
+            if (!HasSceneStrategy(sceneName))
             {
                 throw new KeyNotFoundException($"Does not find `{sceneName}' in SceneStrategyMap.");
             }
             return SceneStrategyMap[sceneName];
         }
 
-        private bool HasSceneStrategyStructure(string sceneName)
+        private bool HasSceneStrategy(string sceneName)
         {
             return SceneStrategyMap.ContainsKey(sceneName);
         }
 
-        private bool HasPreLoadSceneStrategyStructure(string sceneName)
+        private bool HasPreLoadSceneStrategy(string sceneName)
         {
-            return HasSceneStrategyStructure(sceneName) && SceneStrategyMap[sceneName].PreLoadSceneNameList.Any();
+            return HasSceneStrategy(sceneName) && SceneStrategyMap[sceneName].PreLoadSceneNameList.Any();
         }
 
-        private bool HasPostUnloadSceneStrategyStructure(string sceneName)
+        private bool HasPostUnloadSceneStrategy(string sceneName)
         {
-            return HasSceneStrategyStructure(sceneName) && SceneStrategyMap[sceneName].PostUnloadSceneNameList.Any();
-        }
-
-        private bool CanUnloadScene(string sceneName)
-        {
-            return !ReferenceCounterMap.ContainsKey(sceneName) || ReferenceCounterMap[sceneName] <= 0;
+            return HasSceneStrategy(sceneName) && SceneStrategyMap[sceneName].PostUnloadSceneNameList.Any();
         }
 
         private void IncrementReferenceCounter(string sceneName)
@@ -157,7 +152,7 @@ namespace CAFU.Scene.Domain.UseCase
             {
                 foreach (var preLoadSceneName in entry.Value.PreLoadSceneNameList)
                 {
-                    if (!HasSceneStrategyStructure(preLoadSceneName))
+                    if (!HasSceneStrategy(preLoadSceneName))
                     {
                         throw new InvalidOperationException($"SceneName `{preLoadSceneName}' specified as pre load in strategy of `{entry.Key}'.");
                     }
@@ -165,7 +160,7 @@ namespace CAFU.Scene.Domain.UseCase
 
                 foreach (var postUnloadSceneName in entry.Value.PostUnloadSceneNameList)
                 {
-                    if (!HasSceneStrategyStructure(postUnloadSceneName))
+                    if (!HasSceneStrategy(postUnloadSceneName))
                     {
                         throw new InvalidOperationException($"SceneName `{postUnloadSceneName}' specified as post unload in strategy of `{entry.Key}'.");
                     }
@@ -178,7 +173,7 @@ namespace CAFU.Scene.Domain.UseCase
         {
             foreach (var sceneName in InitialSceneNameList)
             {
-                if (!HasSceneStrategyStructure(sceneName))
+                if (!HasSceneStrategy(sceneName))
                 {
                     throw new InvalidOperationException($"SceneName `{sceneName}' does not determinate in SceneStrategyList.");
                 }
