@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CAFU.Core;
 using UnityEngine;
+using UnityModule;
 
 namespace CAFU.Scene.Domain.Structure
 {
@@ -19,8 +20,6 @@ namespace CAFU.Scene.Domain.Structure
         where TSceneName : struct
     {
         new TSceneName SceneName { get; }
-        new IEnumerable<TSceneName> PreLoadSceneNameList { get; }
-        new IEnumerable<TSceneName> PostUnloadSceneNameList { get; }
     }
 
     [Serializable]
@@ -62,8 +61,6 @@ namespace CAFU.Scene.Domain.Structure
         public bool CanLoadMultiple => canLoadMultiple;
         public bool LoadAsSingle => loadAsSingle;
         IEnumerable<string> ISceneStrategy.PreLoadSceneNameList => preLoadSceneNameList.Select(x => x.ToString());
-        IEnumerable<TSceneName> ISceneStrategy<TSceneName>.PreLoadSceneNameList => preLoadSceneNameList;
         IEnumerable<string> ISceneStrategy.PostUnloadSceneNameList => postUnloadSceneNameList.Select(x => x.ToString());
-        IEnumerable<TSceneName> ISceneStrategy<TSceneName>.PostUnloadSceneNameList => postUnloadSceneNameList;
     }
 }
