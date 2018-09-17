@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CAFU.Core;
 using UnityEngine;
+using UnityModule;
 
 namespace CAFU.Scene.Domain.Structure
 {
@@ -13,7 +14,8 @@ namespace CAFU.Scene.Domain.Structure
     public abstract class SceneStrategyListBase<TSceneStrategy> : ScriptableObject, ISceneStrategyList
         where TSceneStrategy : ISceneStrategy
     {
-        [SerializeField] private List<TSceneStrategy> list;
+        [SerializeField] [ElementTitle("sceneName")]
+        private List<TSceneStrategy> list;
 
         private IEnumerable<TSceneStrategy> List => list;
 
