@@ -1,12 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using CAFU.Core;
-using CAFU.Scene.Application;
 using CAFU.Scene.Application.Enumerate;
 using CAFU.Scene.Domain.Structure;
 using UniRx;
 using UnityEngine.SceneManagement;
-using Zenject;
 
 namespace CAFU.Scene.Domain.Entity
 {
@@ -28,9 +26,6 @@ namespace CAFU.Scene.Domain.Entity
         private ISubject<Tense> LoadSubject { get; } = new Subject<Tense>();
         private ISubject<Tense> UnloadSubject { get; } = new Subject<Tense>();
 
-        [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
-        private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
-
         public SceneEntity(ISceneStrategy sceneStrategy)
         {
             SceneStrategy = sceneStrategy;
@@ -42,9 +37,7 @@ namespace CAFU.Scene.Domain.Entity
         {
             LoadSubject.OnNext(Tense.Will);
             await SceneManager.LoadSceneAsync(
-                SceneStrategy.ShouldApplyCompleter
-                    ? SceneNameCompleter(SceneStrategy.SceneName)
-                    : SceneStrategy.SceneName,
+                SceneStrategy.SceneName,
                 SceneStrategy.LoadAsSingle
                     ? LoadSceneMode.Single
                     : LoadSceneMode.Additive
@@ -56,9 +49,7 @@ namespace CAFU.Scene.Domain.Entity
         public async Task Unload()
         {
             UnloadSubject.OnNext(Tense.Will);
-            await SceneManager.UnloadSceneAsync(
-                SceneStrategy.ShouldApplyCompleter ? SceneNameCompleter(SceneStrategy.SceneName) : SceneStrategy.SceneName
-            );
+            await SceneManager.UnloadSceneAsync(SceneStrategy.SceneName);
             UnloadSubject.OnNext(Tense.Did);
             UnloadSubject.OnCompleted();
         }
