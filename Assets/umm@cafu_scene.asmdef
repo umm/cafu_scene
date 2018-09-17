@@ -2,6 +2,7 @@
     "name": "umm@cafu_scene",
     "references": [
         "umm@cafu_core@v3",
+        "umm@cafu_zenject",
         "umm@unirx",
         "Zenject"
     ],
