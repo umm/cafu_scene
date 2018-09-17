@@ -1,10 +1,8 @@
 using System;
 using CAFU.Core;
-using CAFU.Scene.Application;
 using CAFU.Scene.Domain.Structure;
 using UniRx;
 using UnityEngine.SceneManagement;
-using Zenject;
 
 namespace CAFU.Scene.Domain.Entity
 {
