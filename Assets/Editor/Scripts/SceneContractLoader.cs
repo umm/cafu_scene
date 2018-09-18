@@ -26,6 +26,7 @@ namespace CAFU.Scene.Editor
                 if (state == PlayModeStateChange.EnteredEditMode && EditorPrefs.HasKey(EditorPrefsKeySystemControllerProperty))
                 {
                     RestoreScenes();
+                    EditorPrefs.DeleteKey(EditorPrefsKeySystemControllerProperty);
                 }
 
                 if (state == PlayModeStateChange.ExitingPlayMode)
