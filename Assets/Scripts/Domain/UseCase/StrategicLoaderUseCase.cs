@@ -72,6 +72,7 @@ namespace CAFU.Scene.Domain.UseCase
                             .PostUnloadSceneNameList
                             .Where(x => !ReferenceCounterMap.ContainsKey(x) || ReferenceCounterMap[x] <= 0)
                             .Select(x => SceneStrategyMap[x])
+                            .Where(x => !x.ProtectFromUnloading)
                             .Select(UnloadAsObservable)
                             .WhenAll()
                     )
