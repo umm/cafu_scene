@@ -11,6 +11,7 @@ namespace CAFU.Scene.Domain.Structure
     {
         string SceneName { get; }
         bool CanLoadMultiple { get; }
+        bool ProtectFromUnloading { get; }
         bool LoadAsSingle { get; }
         IEnumerable<string> PreLoadSceneNameList { get; }
         IEnumerable<string> PostUnloadSceneNameList { get; }
@@ -27,18 +28,28 @@ namespace CAFU.Scene.Domain.Structure
     {
         [SerializeField] private string sceneName;
         [SerializeField] private bool canLoadMultiple;
+        [SerializeField] private bool protectFromUnloading;
         [SerializeField] private bool loadAsSingle;
         [SerializeField] private List<string> preLoadSceneNameList;
         [SerializeField] private List<string> postUnloadSceneNameList;
         public string SceneName => sceneName;
         public bool CanLoadMultiple => canLoadMultiple;
+        public bool ProtectFromUnloading => protectFromUnloading;
         public bool LoadAsSingle => loadAsSingle;
         public IEnumerable<string> PreLoadSceneNameList => preLoadSceneNameList;
 
-        public SceneStrategy(string sceneName, bool canLoadMultiple = false, bool loadAsSingle = false, List<string> preLoadSceneNameList = default(List<string>), List<string> postUnloadSceneNameList = default(List<string>))
+        public SceneStrategy(
+            string sceneName,
+            bool canLoadMultiple = false,
+            bool protectFromUnloading = false,
+            bool loadAsSingle = false,
+            List<string> preLoadSceneNameList = default(List<string>),
+            List<string> postUnloadSceneNameList = default(List<string>)
+        )
         {
             this.sceneName = sceneName;
             this.canLoadMultiple = canLoadMultiple;
+            this.protectFromUnloading = protectFromUnloading;
             this.loadAsSingle = loadAsSingle;
             this.preLoadSceneNameList = preLoadSceneNameList;
             this.postUnloadSceneNameList = postUnloadSceneNameList;
@@ -53,12 +64,14 @@ namespace CAFU.Scene.Domain.Structure
     {
         [SerializeField] private TSceneName sceneName;
         [SerializeField] private bool canLoadMultiple;
+        [SerializeField] private bool protectFromUnloading;
         [SerializeField] private bool loadAsSingle;
         [SerializeField] private List<TSceneName> preLoadSceneNameList;
         [SerializeField] private List<TSceneName> postUnloadSceneNameList;
         string ISceneStrategy.SceneName => sceneName.ToString();
         TSceneName ISceneStrategy<TSceneName>.SceneName => sceneName;
         public bool CanLoadMultiple => canLoadMultiple;
+        public bool ProtectFromUnloading => protectFromUnloading;
         public bool LoadAsSingle => loadAsSingle;
         IEnumerable<string> ISceneStrategy.PreLoadSceneNameList => preLoadSceneNameList.Select(x => x.ToString());
         IEnumerable<string> ISceneStrategy.PostUnloadSceneNameList => postUnloadSceneNameList.Select(x => x.ToString());
