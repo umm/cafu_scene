@@ -1,0 +1,13 @@
+{
+    "name": "umm@cafu_scene-Editor",
+    "references": [
+        "umm@cafu_core@v3",
+        "umm@cafu_scene"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

@@ -3,48 +3,43 @@ using System.Collections.Generic;
 using System.Linq;
 using CAFU.Core;
 using UnityEngine;
+using UnityModule;
 
 namespace CAFU.Scene.Domain.Structure
 {
-    public interface ISceneStrategyStructure : IStructure
+    public interface ISceneStrategy : IStructure
     {
         string SceneName { get; }
         bool CanLoadMultiple { get; }
         bool LoadAsSingle { get; }
-        bool ShouldApplyCompleter { get; }
         IEnumerable<string> PreLoadSceneNameList { get; }
         IEnumerable<string> PostUnloadSceneNameList { get; }
     }
 
-    public interface ISceneStrategyStructure<out TSceneName> : ISceneStrategyStructure
+    public interface ISceneStrategy<out TSceneName> : ISceneStrategy
         where TSceneName : struct
     {
         new TSceneName SceneName { get; }
-        new IEnumerable<TSceneName> PreLoadSceneNameList { get; }
-        new IEnumerable<TSceneName> PostUnloadSceneNameList { get; }
     }
 
     [Serializable]
-    public class SceneStrategyStructure : ISceneStrategyStructure
+    public class SceneStrategy : ISceneStrategy
     {
         [SerializeField] private string sceneName;
         [SerializeField] private bool canLoadMultiple;
         [SerializeField] private bool loadAsSingle;
-        [SerializeField] private bool shouldApplyCompleter;
         [SerializeField] private List<string> preLoadSceneNameList;
         [SerializeField] private List<string> postUnloadSceneNameList;
         public string SceneName => sceneName;
         public bool CanLoadMultiple => canLoadMultiple;
         public bool LoadAsSingle => loadAsSingle;
-        public bool ShouldApplyCompleter => shouldApplyCompleter;
         public IEnumerable<string> PreLoadSceneNameList => preLoadSceneNameList;
 
-        public SceneStrategyStructure(string sceneName, bool canLoadMultiple = false, bool loadAsSingle = false, bool shouldApplyCompleter = false, List<string> preLoadSceneNameList = default(List<string>), List<string> postUnloadSceneNameList = default(List<string>))
+        public SceneStrategy(string sceneName, bool canLoadMultiple = false, bool loadAsSingle = false, List<string> preLoadSceneNameList = default(List<string>), List<string> postUnloadSceneNameList = default(List<string>))
         {
             this.sceneName = sceneName;
             this.canLoadMultiple = canLoadMultiple;
             this.loadAsSingle = loadAsSingle;
-            this.shouldApplyCompleter = shouldApplyCompleter;
             this.preLoadSceneNameList = preLoadSceneNameList;
             this.postUnloadSceneNameList = postUnloadSceneNameList;
         }
@@ -53,23 +48,19 @@ namespace CAFU.Scene.Domain.Structure
     }
 
     [Serializable]
-    public abstract class SceneStrategyStructure<TSceneName> : ISceneStrategyStructure<TSceneName>
+    public abstract class SceneStrategy<TSceneName> : ISceneStrategy<TSceneName>
         where TSceneName : struct
     {
         [SerializeField] private TSceneName sceneName;
         [SerializeField] private bool canLoadMultiple;
         [SerializeField] private bool loadAsSingle;
-        [SerializeField] private bool shouldApplyCompleter;
         [SerializeField] private List<TSceneName> preLoadSceneNameList;
         [SerializeField] private List<TSceneName> postUnloadSceneNameList;
-        string ISceneStrategyStructure.SceneName => sceneName.ToString();
-        TSceneName ISceneStrategyStructure<TSceneName>.SceneName => sceneName;
+        string ISceneStrategy.SceneName => sceneName.ToString();
+        TSceneName ISceneStrategy<TSceneName>.SceneName => sceneName;
         public bool CanLoadMultiple => canLoadMultiple;
         public bool LoadAsSingle => loadAsSingle;
-        public bool ShouldApplyCompleter => shouldApplyCompleter;
-        IEnumerable<string> ISceneStrategyStructure.PreLoadSceneNameList => preLoadSceneNameList.Select(x => x.ToString());
-        IEnumerable<TSceneName> ISceneStrategyStructure<TSceneName>.PreLoadSceneNameList => preLoadSceneNameList;
-        IEnumerable<string> ISceneStrategyStructure.PostUnloadSceneNameList => postUnloadSceneNameList.Select(x => x.ToString());
-        IEnumerable<TSceneName> ISceneStrategyStructure<TSceneName>.PostUnloadSceneNameList => postUnloadSceneNameList;
+        IEnumerable<string> ISceneStrategy.PreLoadSceneNameList => preLoadSceneNameList.Select(x => x.ToString());
+        IEnumerable<string> ISceneStrategy.PostUnloadSceneNameList => postUnloadSceneNameList.Select(x => x.ToString());
     }
 }

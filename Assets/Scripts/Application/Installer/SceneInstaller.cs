@@ -3,6 +3,7 @@ using CAFU.Scene.Data.Repository;
 using CAFU.Scene.Domain.Entity;
 using CAFU.Scene.Domain.Structure;
 using CAFU.Scene.Domain.UseCase;
+using CAFU.Scene.Presentation.Presenter;
 using Zenject;
 
 namespace CAFU.Scene.Application.Installer
@@ -17,14 +18,13 @@ namespace CAFU.Scene.Application.Installer
         public override void InstallBindings()
         {
             // Structures
-            Container.BindIFactory<ISceneStrategyStructure, ILoadRequestStructure>().To<LoadRequestStructure>();
-            Container.BindIFactory<ISceneStrategyStructure, IUnloadRequestStructure>().To<UnloadRequestStructure>();
-            Container.BindIFactory<string, ISceneStructure>().To<SceneStructure>();
+            Container.BindIFactory<string, ISceneStrategy>().To<SceneStrategy>();
+            Container.BindIFactory<string, IScene>().To<Domain.Structure.Scene>();
 
             // Entities
-            Container.BindInterfacesTo<LoadRequestEntity>().AsSingle();
+            Container.BindInterfacesTo<RequestEntity>().AsSingle();
             Container.BindInterfacesTo<SceneStateEntity>().AsSingle();
-            Container.BindIFactory<ISceneStrategyStructure, ISceneEntity>().To<SceneEntity>();
+            Container.BindIFactory<ISceneStrategy, ISceneEntity>().To<SceneEntity>();
 
             // UseCases
             Container.BindInterfacesTo<TUseCase>().AsSingle();
@@ -36,6 +36,9 @@ namespace CAFU.Scene.Application.Installer
             // DataStores
             Container.Bind<ISceneDataStore>().WithId(Constant.InjectId.DataStore.SceneInBuild).To<SceneInBuildDataStore>().AsSingle();
             Container.Bind<ISceneDataStore>().WithId(Constant.InjectId.DataStore.SceneInAssetBundle).To<SceneInAssetBundleDataStore>().AsSingle();
+
+            // Presenters
+            Container.BindInterfacesTo<RequestHandlerPresenter>().AsSingle();
         }
     }
 }

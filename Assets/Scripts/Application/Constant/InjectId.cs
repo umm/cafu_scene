@@ -4,8 +4,6 @@ namespace CAFU.Scene.Application
     {
         public static class InjectId
         {
-            public const string SceneNameCompleter = "SceneNameCompleter";
-
             public const string InitialSceneNameList = "InitialSceneNameList";
 
             public static class UseCase

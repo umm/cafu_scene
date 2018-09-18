@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +9,7 @@ using Zenject;
 
 namespace CAFU.Scene.Data.Repository
 {
-    public class SceneDataStoreResolver : IResolver<ISceneStrategyStructure, ISceneDataStore>
+    public class SceneDataStoreResolver : IResolver<ISceneStrategy, ISceneDataStore>
     {
         [Inject(Id = Constant.InjectId.DataStore.SceneInBuild)]
         private ISceneDataStore InBuildDataStore { get; }
@@ -18,21 +17,14 @@ namespace CAFU.Scene.Data.Repository
         [Inject(Id = Constant.InjectId.DataStore.SceneInAssetBundle)]
         private ISceneDataStore InAssetBundleDataStore { get; }
 
-        [InjectOptional(Id = Constant.InjectId.SceneNameCompleter)]
-        private Func<string, string> SceneNameCompleter { get; } = sceneName => sceneName;
-
-        public ISceneDataStore Resolve(ISceneStrategyStructure param1)
+        public ISceneDataStore Resolve(ISceneStrategy param1)
         {
             return
                 InBuildScenePathList
                     .Any(
                         scenePath =>
                             // パスは Assets/Scenes/Foo/Bar.unity という形式なのでシーン名とのマッチは拡張子を除く
-                            Path.GetFileNameWithoutExtension(scenePath) == (
-                                param1.ShouldApplyCompleter
-                                    ? SceneNameCompleter(param1.SceneName)
-                                    : param1.SceneName
-                            )
+                            Path.GetFileNameWithoutExtension(scenePath) == param1.SceneName
                     )
                     ? InBuildDataStore
                     : InAssetBundleDataStore;

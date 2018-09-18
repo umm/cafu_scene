@@ -6,6 +6,6 @@ namespace CAFU.Scene.Data.Repository
 {
     public interface ISceneDataStore : IDataStore
     {
-        Task<ISceneStructure> GetAsync(ISceneStrategyStructure sceneStrategyStructure);
+        Task<IScene> GetAsync(ISceneStrategy sceneStrategy);
     }
 }

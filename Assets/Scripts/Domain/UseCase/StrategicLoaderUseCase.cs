@@ -2,96 +2,65 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using CAFU.Scene.Application;
-using CAFU.Scene.Domain.Entity;
 using CAFU.Scene.Domain.Structure;
 using UniRx;
-using Zenject;
 
 namespace CAFU.Scene.Domain.UseCase
 {
-    public class StrategicLoaderUseCase : ILoaderUseCase, IInitializable
+    public class StrategicLoaderUseCase : LoaderUseCaseBase
     {
-        [Inject] IFactory<ISceneStrategyStructure, ISceneEntity> ILoaderUseCase.SceneEntityFactory { get; }
-
-        [Inject] ILoadRequestEntity ILoaderUseCase.LoadRequestEntity { get; }
-
-        [Inject] ISceneStateEntity ILoaderUseCase.SceneStateEntity { get; }
-
-        [Inject] ISceneRepository ILoaderUseCase.SceneRepository { get; }
-
-        LinkedList<ISceneEntity> ILoaderUseCase.SceneEntityList { get; } = new LinkedList<ISceneEntity>();
-
-        [Inject(Id = Constant.InjectId.InitialSceneNameList)]
-        private IEnumerable<string> InitialSceneNameList { get; }
-
-        [Inject(Id = Constant.InjectId.UseCase.SceneStrategyMap)]
-        private IReadOnlyDictionary<string, ISceneStrategyStructure> SceneStrategyStructureMap { get; } = new Dictionary<string, ISceneStrategyStructure>();
-
         private IDictionary<string, int> ReferenceCounterMap { get; } = new Dictionary<string, int>();
 
-        void IInitializable.Initialize()
+        public override void Load(ISceneStrategy sceneStrategy)
         {
-            this.InitializeUseCase();
-            Validate();
-            // Increment reference counters of scenes referenced by initial scenes
-            InitialSceneNameList
-                .SelectMany(x => SceneStrategyStructureMap[x].PreLoadSceneNameList)
-                .ToList()
-                .ForEach(IncrementReferenceCounter);
-            ((ILoaderUseCase) this).LoadRequestEntity.SetSceneStrategyStructureResolver(x => SceneStrategyStructureMap[x]);
-        }
-
-        public void Load(ILoadRequestStructure loadRequestStructure)
-        {
-            if (!HasSceneStrategyStructure(loadRequestStructure.SceneStrategyStructure.SceneName))
+            if (!HasSceneStrategy(sceneStrategy.SceneName))
             {
-                throw new ArgumentOutOfRangeException($"Does not find `{loadRequestStructure.SceneStrategyStructure.SceneName}' in SceneStrategyStructureMap.");
+                throw new ArgumentOutOfRangeException($"Does not find `{sceneStrategy.SceneName}' in SceneStrategyMap.");
             }
 
-            if (!loadRequestStructure.SceneStrategyStructure.CanLoadMultiple && ((ILoaderUseCase) this).LoadRequestEntity.HasLoaded(loadRequestStructure.SceneStrategyStructure.SceneName))
+            if (!CanLoadScene(sceneStrategy))
             {
                 return;
             }
 
-            if (HasPreLoadSceneStrategyStructure(loadRequestStructure.SceneStrategyStructure.SceneName))
+            if (HasPreLoadSceneStrategy(sceneStrategy.SceneName))
             {
-                // First, load target scene
-                SceneStrategyStructureMap[loadRequestStructure.SceneStrategyStructure.SceneName]
+                // First, load pre load scenes
+                SceneStrategyMap[sceneStrategy.SceneName]
                     .PreLoadSceneNameList
-                    .Select(x => SceneStrategyStructureMap[x])
-                    .Select(this.LoadAsObservable)
+                    .Select(x => SceneStrategyMap[x])
+                    .Select(LoadAsObservable)
                     .WhenAll()
                     .ForEachAsync(
-                        _ => SceneStrategyStructureMap[loadRequestStructure.SceneStrategyStructure.SceneName]
+                        _ => SceneStrategyMap[sceneStrategy.SceneName]
                             .PreLoadSceneNameList
                             .ToList()
                             .ForEach(IncrementReferenceCounter)
                     )
                     .ObserveOnMainThread()
-                    // Second, load pre load scenes
-                    .SelectMany(_ => this.LoadAsObservable(loadRequestStructure.SceneStrategyStructure))
+                    // Second, load target scene
+                    .SelectMany(_ => LoadAsObservable(sceneStrategy))
                     .Subscribe();
             }
             else
             {
-                this.LoadAsObservable(loadRequestStructure.SceneStrategyStructure).Subscribe();
+                LoadAsObservable(sceneStrategy).Subscribe();
             }
         }
 
-        public void Unload(IUnloadRequestStructure unloadRequestStructure)
+        public override void Unload(ISceneStrategy sceneStrategy)
         {
-            if (!HasSceneStrategyStructure(unloadRequestStructure.SceneStrategyStructure.SceneName))
+            if (!HasSceneStrategy(sceneStrategy.SceneName))
             {
-                throw new ArgumentOutOfRangeException($"Does not find `{unloadRequestStructure.SceneStrategyStructure.SceneName}' in SceneStrategyStructureMap.");
+                throw new ArgumentOutOfRangeException($"Does not find `{sceneStrategy.SceneName}' in SceneStrategyMap.");
             }
 
-            if (HasPostUnloadSceneStrategyStructure(unloadRequestStructure.SceneStrategyStructure.SceneName))
+            if (HasPostUnloadSceneStrategy(sceneStrategy.SceneName))
             {
                 // First, unload target scene
-                this.UnloadAsObservable(unloadRequestStructure.SceneStrategyStructure)
+                UnloadAsObservable(sceneStrategy)
                     .ForEachAsync(
-                        _ => SceneStrategyStructureMap[unloadRequestStructure.SceneStrategyStructure.SceneName]
+                        _ => SceneStrategyMap[sceneStrategy.SceneName]
                             .PostUnloadSceneNameList
                             .ToList()
                             .ForEach(DecrementReferenceCounter)
@@ -99,44 +68,48 @@ namespace CAFU.Scene.Domain.UseCase
                     .ObserveOnMainThread()
                     // Second, unload post unload scenes
                     .SelectMany(
-                        _ => SceneStrategyStructureMap[unloadRequestStructure.SceneStrategyStructure.SceneName]
+                        _ => SceneStrategyMap[sceneStrategy.SceneName]
                             .PostUnloadSceneNameList
-                            .Where(CanUnloadScene)
-                            .Select(x => SceneStrategyStructureMap[x])
-                            .Select(this.UnloadAsObservable)
+                            .Where(x => !ReferenceCounterMap.ContainsKey(x) || ReferenceCounterMap[x] <= 0)
+                            .Select(x => SceneStrategyMap[x])
+                            .Select(UnloadAsObservable)
                             .WhenAll()
                     )
                     .Subscribe();
             }
             else
             {
-                this.UnloadAsObservable(unloadRequestStructure.SceneStrategyStructure).Subscribe();
+                UnloadAsObservable(sceneStrategy).Subscribe();
             }
         }
 
-        public IEnumerable<ISceneStrategyStructure> GenerateInitialSceneStrategyList()
+        protected override IEnumerable<ISceneStrategy> GenerateInitialSceneStrategyList()
         {
-            return InitialSceneNameList.Select(x => SceneStrategyStructureMap[x]);
+            return InitialSceneNameList.Select(x => SceneStrategyMap[x]);
         }
 
-        private bool HasSceneStrategyStructure(string sceneName)
+        protected override ISceneStrategy GetOrCreateSceneStrategy(string sceneName)
         {
-            return SceneStrategyStructureMap.ContainsKey(sceneName);
+            if (!HasSceneStrategy(sceneName))
+            {
+                throw new KeyNotFoundException($"Does not find `{sceneName}' in SceneStrategyMap.");
+            }
+            return SceneStrategyMap[sceneName];
         }
 
-        private bool HasPreLoadSceneStrategyStructure(string sceneName)
+        private bool HasSceneStrategy(string sceneName)
         {
-            return HasSceneStrategyStructure(sceneName) && SceneStrategyStructureMap[sceneName].PreLoadSceneNameList.Any();
+            return SceneStrategyMap.ContainsKey(sceneName);
         }
 
-        private bool HasPostUnloadSceneStrategyStructure(string sceneName)
+        private bool HasPreLoadSceneStrategy(string sceneName)
         {
-            return HasSceneStrategyStructure(sceneName) && SceneStrategyStructureMap[sceneName].PostUnloadSceneNameList.Any();
+            return HasSceneStrategy(sceneName) && SceneStrategyMap[sceneName].PreLoadSceneNameList.Any();
         }
 
-        private bool CanUnloadScene(string sceneName)
+        private bool HasPostUnloadSceneStrategy(string sceneName)
         {
-            return !ReferenceCounterMap.ContainsKey(sceneName) || ReferenceCounterMap[sceneName] <= 0;
+            return HasSceneStrategy(sceneName) && SceneStrategyMap[sceneName].PostUnloadSceneNameList.Any();
         }
 
         private void IncrementReferenceCounter(string sceneName)
@@ -165,14 +138,21 @@ namespace CAFU.Scene.Domain.UseCase
             }
         }
 
-        [Conditional("UNITY_EDITOR")]
-        private void Validate()
+        protected override void PreInitialize()
         {
-            foreach (var entry in SceneStrategyStructureMap)
+            base.PreInitialize();
+            ValidateSceneStrategyMap();
+            ValidateInitialSceneNameList();
+        }
+
+        [Conditional("UNITY_EDITOR")]
+        private void ValidateSceneStrategyMap()
+        {
+            foreach (var entry in SceneStrategyMap)
             {
                 foreach (var preLoadSceneName in entry.Value.PreLoadSceneNameList)
                 {
-                    if (!HasSceneStrategyStructure(preLoadSceneName))
+                    if (!HasSceneStrategy(preLoadSceneName))
                     {
                         throw new InvalidOperationException($"SceneName `{preLoadSceneName}' specified as pre load in strategy of `{entry.Key}'.");
                     }
@@ -180,10 +160,22 @@ namespace CAFU.Scene.Domain.UseCase
 
                 foreach (var postUnloadSceneName in entry.Value.PostUnloadSceneNameList)
                 {
-                    if (!HasSceneStrategyStructure(postUnloadSceneName))
+                    if (!HasSceneStrategy(postUnloadSceneName))
                     {
                         throw new InvalidOperationException($"SceneName `{postUnloadSceneName}' specified as post unload in strategy of `{entry.Key}'.");
                     }
+                }
+            }
+        }
+
+        [Conditional("UNITY_EDITOR")]
+        private void ValidateInitialSceneNameList()
+        {
+            foreach (var sceneName in InitialSceneNameList)
+            {
+                if (!HasSceneStrategy(sceneName))
+                {
+                    throw new InvalidOperationException($"SceneName `{sceneName}' does not determinate in SceneStrategyList.");
                 }
             }
         }
