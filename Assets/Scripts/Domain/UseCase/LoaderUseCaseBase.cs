@@ -35,10 +35,10 @@ namespace CAFU.Scene.Domain.UseCase
         void IInitializable.Initialize()
         {
             PreInitialize();
-            RequestEntity.OnLoadRequestAsObservable().Subscribe(((ILoaderUseCase) this).Load);
-            RequestEntity.OnUnloadRequestAsObservable().Subscribe(((ILoaderUseCase) this).Unload);
-            RequestHandlerPresenter.RequestLoadSceneAsObservable().Select(GetOrCreateSceneStrategy).Subscribe(RequestEntity.RequestLoad);
-            RequestHandlerPresenter.RequestUnloadSceneAsObservable().Select(GetOrCreateSceneStrategy).Subscribe(RequestEntity.RequestUnload);
+            RequestEntity.OnLoadRequestAsObservable().Select(GetOrCreateSceneStrategy).Subscribe(((ILoaderUseCase) this).Load);
+            RequestEntity.OnUnloadRequestAsObservable().Select(GetOrCreateSceneStrategy).Subscribe(((ILoaderUseCase) this).Unload);
+            RequestHandlerPresenter.RequestLoadSceneAsObservable().Subscribe(RequestEntity.RequestLoad);
+            RequestHandlerPresenter.RequestUnloadSceneAsObservable().Subscribe(RequestEntity.RequestUnload);
             SceneManager.sceneLoaded += (scene, loadSceneMode) => SceneStateEntity.DidLoadSubject.OnNext(scene.name);
             SceneManager.sceneUnloaded += (scene) => SceneStateEntity.DidUnloadSubject.OnNext(scene.name);
             GenerateInitialSceneStrategyList().Select(SceneEntityFactory.Create).ToList().ForEach(x => SceneEntityList.AddLast(x));
@@ -95,7 +95,7 @@ namespace CAFU.Scene.Domain.UseCase
 
         private bool HasLoaded(ISceneStrategy sceneStrategy)
         {
-            return RequestEntity.HasLoaded(sceneStrategy);
+            return RequestEntity.HasLoaded(sceneStrategy.SceneName);
         }
 
         public abstract void Load(ISceneStrategy sceneStrategy);

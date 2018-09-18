@@ -8,39 +8,39 @@ namespace CAFU.Scene.Domain.Entity
 {
     public interface IRequestEntity : IEntity
     {
-        void RequestLoad(ISceneStrategy sceneStrategy);
-        void RequestUnload(ISceneStrategy sceneStrategy);
-        bool HasLoaded(ISceneStrategy sceneStrategy);
-        IObservable<ISceneStrategy> OnLoadRequestAsObservable();
-        IObservable<ISceneStrategy> OnUnloadRequestAsObservable();
+        void RequestLoad(string sceneName);
+        void RequestUnload(string sceneName);
+        bool HasLoaded(string sceneName);
+        IObservable<string> OnLoadRequestAsObservable();
+        IObservable<string> OnUnloadRequestAsObservable();
     }
 
     public class RequestEntity : IRequestEntity
     {
-        private ISubject<ISceneStrategy> LoadRequestSubject { get; } = new Subject<ISceneStrategy>();
-        private ISubject<ISceneStrategy> UnloadRequestSubject { get; } = new Subject<ISceneStrategy>();
+        private ISubject<string> LoadRequestSubject { get; } = new Subject<string>();
+        private ISubject<string> UnloadRequestSubject { get; } = new Subject<string>();
 
-        public void RequestLoad(ISceneStrategy sceneStrategy)
+        public void RequestLoad(string sceneName)
         {
-            LoadRequestSubject.OnNext(sceneStrategy);
+            LoadRequestSubject.OnNext(sceneName);
         }
 
-        public void RequestUnload(ISceneStrategy sceneStrategy)
+        public void RequestUnload(string sceneName)
         {
-            UnloadRequestSubject.OnNext(sceneStrategy);
+            UnloadRequestSubject.OnNext(sceneName);
         }
 
-        public bool HasLoaded(ISceneStrategy sceneStrategy)
+        public bool HasLoaded(string sceneName)
         {
-            return SceneManager.GetSceneByName(sceneStrategy.SceneName).isLoaded;
+            return SceneManager.GetSceneByName(sceneName).isLoaded;
         }
 
-        public IObservable<ISceneStrategy> OnLoadRequestAsObservable()
+        public IObservable<string> OnLoadRequestAsObservable()
         {
             return LoadRequestSubject;
         }
 
-        public IObservable<ISceneStrategy> OnUnloadRequestAsObservable()
+        public IObservable<string> OnUnloadRequestAsObservable()
         {
             return UnloadRequestSubject;
         }
