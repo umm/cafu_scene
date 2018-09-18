@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
-namespace CAFU.Zenject.Editor
+namespace CAFU.Scene.Editor
 {
     [InitializeOnLoad]
     public static class SceneContractLoader
