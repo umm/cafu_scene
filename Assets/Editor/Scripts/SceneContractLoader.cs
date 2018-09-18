@@ -118,8 +118,8 @@ namespace CAFU.Scene.Editor
             SceneManager.SetActiveScene(systemScene);
 
             // Store original `InitialSceneNameList' value
-            var systemControllerProperty = new SceneContractState(systemController.InitialSceneNameList.ToList(), openedScenePathList);
-            EditorPrefs.SetString(EditorPrefsKeySystemControllerProperty, JsonUtility.ToJson(systemControllerProperty));
+            var sceneContractState = new SceneContractState(systemController.InitialSceneNameList.ToList(), openedScenePathList);
+            EditorPrefs.SetString(EditorPrefsKeySystemControllerProperty, JsonUtility.ToJson(sceneContractState));
 
             // Overwrite opened scene name list into `InitialSceneNameList'
             systemController.GetType().GetProperty(SystemControllerPropertyNameInitialSceneNameList)?.SetValue(systemController, openedSceneNameList);
