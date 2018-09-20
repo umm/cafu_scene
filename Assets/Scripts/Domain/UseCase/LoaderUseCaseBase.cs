@@ -54,6 +54,7 @@ namespace CAFU.Scene.Domain.UseCase
             }
 
             var sceneEntity = SceneEntityFactory.Create(sceneStrategy);
+            // For blocking when a Load instruction flew in the same frame
             LoadDisposableMap[sceneStrategy.SceneName] = sceneEntity.DidLoadAsObservable().Take(1).Subscribe();
             SceneEntityList.AddLast(sceneEntity);
             SceneStateEntity.WillLoadSubject.OnNext(sceneEntity.SceneStrategy.SceneName);
@@ -64,7 +65,8 @@ namespace CAFU.Scene.Domain.UseCase
                     _ => sceneEntity
                         .Load()
                         .ToObservable()
-                );
+                )
+                .ForEachAsync(_ => LoadDisposableMap.Remove(sceneStrategy.SceneName));
         }
 
         protected IObservable<Unit> UnloadAsObservable(ISceneStrategy sceneStrategy)
