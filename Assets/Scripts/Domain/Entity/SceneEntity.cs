@@ -4,6 +4,7 @@ using CAFU.Core;
 using CAFU.Scene.Application.Enumerate;
 using CAFU.Scene.Domain.Structure;
 using UniRx;
+using UniRx.Async;
 using UnityEngine.SceneManagement;
 
 namespace CAFU.Scene.Domain.Entity
