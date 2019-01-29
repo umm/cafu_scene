@@ -12,8 +12,8 @@ namespace CAFU.Scene.Presentation.Presenter
         IInstanceReceiver,
         IInitializable
     {
-        [Inject] IMessageReceiver IInstanceReceiver.MessageReceiver { get; }
-        [Inject] private IFactory<string, ISceneStrategy> SceneStrategyFactory { get; }
+        [Inject] IMessageReceiver IInstanceReceiver.MessageReceiver { get; set; }
+        [Inject] private IFactory<string, ISceneStrategy> SceneStrategyFactory { get; set; }
 
         private ISubject<string> RequestLoadSubject { get; } = new Subject<string>();
         private ISubject<string> RequestUnloadSubject { get; } = new Subject<string>();
