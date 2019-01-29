@@ -12,10 +12,10 @@ namespace CAFU.Scene.Data.Repository
     public class SceneDataStoreResolver : IResolver<ISceneStrategy, ISceneDataStore>
     {
         [Inject(Id = Constant.InjectId.DataStore.SceneInBuild)]
-        private ISceneDataStore InBuildDataStore { get; }
+        private ISceneDataStore InBuildDataStore { get; set; }
 
         [Inject(Id = Constant.InjectId.DataStore.SceneInAssetBundle)]
-        private ISceneDataStore InAssetBundleDataStore { get; }
+        private ISceneDataStore InAssetBundleDataStore { get; set; }
 
         public ISceneDataStore Resolve(ISceneStrategy param1)
         {
