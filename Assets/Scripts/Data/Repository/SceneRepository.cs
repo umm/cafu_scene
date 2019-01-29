@@ -8,7 +8,7 @@ namespace CAFU.Scene.Data.Repository
 {
     public class SceneRepository : ISceneRepository
     {
-        [Inject] private IResolver<ISceneStrategy, ISceneDataStore> SceneDataStoreResolver { get; }
+        [Inject] private IResolver<ISceneStrategy, ISceneDataStore> SceneDataStoreResolver { get; set; }
 
         public async Task<IScene> GetAsync(ISceneStrategy sceneStrategy)
         {

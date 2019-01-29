@@ -7,7 +7,7 @@ namespace CAFU.Scene.Data.DataStore
 {
     public class SceneInBuildDataStore : ISceneDataStore
     {
-        [Inject] private IFactory<string, IScene> SceneStructureFactory { get; }
+        [Inject] private IFactory<string, IScene> SceneStructureFactory { get; set; }
 
         public async Task<IScene> GetAsync(ISceneStrategy sceneStrategy)
         {

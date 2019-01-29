@@ -12,31 +12,23 @@ namespace CAFU.Scene.Domain.UseCase
 {
     public abstract class LoaderUseCaseBase : ILoaderUseCase, IInitializable
     {
-        [Inject] private IFactory<ISceneStrategy, ISceneEntity> SceneEntityFactory { get; }
-
-        [Inject] private IRequestEntity RequestEntity { get; }
-
-        [Inject] private ISceneStateEntity SceneStateEntity { get; }
-
-        [Inject] private ISceneRepository SceneRepository { get; }
-
-        [Inject] private IRequestHandlerPresenter RequestHandlerPresenter { get; }
-
+        [Inject] private IFactory<ISceneStrategy, ISceneEntity> SceneEntityFactory { get; set; }
+        [Inject] private IRequestEntity RequestEntity { get; set; }
+        [Inject] private ISceneStateEntity SceneStateEntity { get; set; }
+        [Inject] private ISceneRepository SceneRepository { get; set; }
+        [Inject] private IRequestHandlerPresenter RequestHandlerPresenter { get; set; }
         [Inject(Id = Constant.InjectId.InitialSceneNameList)]
-        protected IEnumerable<string> InitialSceneNameList { get; }
-
+        protected IEnumerable<string> InitialSceneNameList { get; set; }
         [InjectOptional(Id = Constant.InjectId.UseCase.SceneStrategyMap)]
-        protected IDictionary<string, ISceneStrategy> SceneStrategyMap { get; } = new Dictionary<string, ISceneStrategy>();
-
+        protected IDictionary<string, ISceneStrategy> SceneStrategyMap { get; set; } = new Dictionary<string, ISceneStrategy>();
         private LinkedList<ISceneEntity> SceneEntityList { get; } = new LinkedList<ISceneEntity>();
-
         private IDictionary<string, IDisposable> LoadDisposableMap { get; } = new Dictionary<string, IDisposable>();
 
         void IInitializable.Initialize()
         {
             PreInitialize();
-            RequestEntity.OnLoadRequestAsObservable().Select(GetOrCreateSceneStrategy).Subscribe(((ILoaderUseCase) this).Load);
-            RequestEntity.OnUnloadRequestAsObservable().Select(GetOrCreateSceneStrategy).Subscribe(((ILoaderUseCase) this).Unload);
+            RequestEntity.OnLoadRequestAsObservable().Select(GetOrCreateSceneStrategy).Subscribe(((ILoaderUseCase)this).Load);
+            RequestEntity.OnUnloadRequestAsObservable().Select(GetOrCreateSceneStrategy).Subscribe(((ILoaderUseCase)this).Unload);
             RequestHandlerPresenter.RequestLoadSceneAsObservable().Subscribe(RequestEntity.RequestLoad);
             RequestHandlerPresenter.RequestUnloadSceneAsObservable().Subscribe(RequestEntity.RequestUnload);
             SceneManager.sceneLoaded += (scene, loadSceneMode) => SceneStateEntity.DidLoadSubject.OnNext(scene.name);
@@ -101,8 +93,11 @@ namespace CAFU.Scene.Domain.UseCase
         }
 
         public abstract void Load(ISceneStrategy sceneStrategy);
+
         public abstract void Unload(ISceneStrategy sceneStrategy);
+
         protected abstract IEnumerable<ISceneStrategy> GenerateInitialSceneStrategyList();
+
         protected abstract ISceneStrategy GetOrCreateSceneStrategy(string sceneName);
 
         // ReSharper disable once VirtualMemberNeverOverridden.Global
